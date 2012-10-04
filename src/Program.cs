@@ -28,14 +28,16 @@ namespace CheckForAdapter
 
         static void Main(string[] args)
         {
-            Console.Title = "Easy to find title!"; // Set the title to find it.
+            Console.Title = "Easy to find title!";
 
-            IntPtr hWnd = FindWindow(null, "Easy to find title!"); // Get console handle
+            IntPtr hWnd = FindWindow(null, "Easy to find title!");
 
+			// Hide the console
             if (hWnd != IntPtr.Zero)
-                ShowWindow(hWnd, 0); // hide console
-
-            SYSTEM_POWER_STATUS status = new SYSTEM_POWER_STATUS(); // The system power charger struct
+                ShowWindow(hWnd, 0); 
+				
+			// The system power charger struct
+            SYSTEM_POWER_STATUS status = new SYSTEM_POWER_STATUS(); 
 
             int current = 0;
             int last = 0;
@@ -43,18 +45,34 @@ namespace CheckForAdapter
             while (true)
             {
                 System.Threading.Thread.Sleep(100);
-                GetSystemPowerStatus(ref status); // use winapi.
-
-                Console.WriteLine(status.ACLineStatus); // Write for debug
-
-                current = status.ACLineStatus; // Set current to the status
-
-                if (current != last) // If the state has changed
+				
+				// Get Power status from Kernell
+                GetSystemPowerStatus(ref status);
+				
+				// Set current to the current status
+                current = status.ACLineStatus; 
+				
+				// If the state has changed since last check
+                if (current != last) 
                 {
-                    if (status.ACLineStatus == 0) // running on battery
-                        (new SoundPlayer("sound\\doh.wav")).Play(); // play doh
-                    else if (status.ACLineStatus == 1) // running on AC
-                        (new SoundPlayer("sound\\woohoo.wav")).Play(); // play woohoo
+					// 0 = AC disconnected
+					// 1 = AC connected
+					switch(current)
+					{
+						case 0:
+							(new SoundPlayer("sound\\doh.wav")).Play();
+							break;
+						
+						case 1:
+							(new SoundPlayer("sound\\woohoo.wav")).Play();
+							break;
+				
+						default:
+							// Probably not an laptop or there's an error. Just quit
+                            System.Windows.Forms.MessageBox.Show("Error! Can't get the status");
+							return;
+                            break;
+					}                        
                 }
 
                 last = current; // set last to current
